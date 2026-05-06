@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System | Smart Terminal</title>
+    <meta name="description" content="AI-powered attendance system with face capture and domain tracking.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar / Stats -->
+        <aside class="sidebar glass">
+            <div class="logo">
+                <i data-lucide="shield-check"></i>
+                <span>SmartCheck</span>
+            </div>
+            
+            <div class="live-clock" id="clock">00:00:00</div>
+            <div class="live-date" id="date">Monday, May 5, 2026</div>
+
+            <nav class="side-nav">
+                <div class="nav-item active">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Terminal</span>
+                </div>
+                <div class="nav-item" id="exportBtn">
+                    <i data-lucide="file-down"></i>
+                    <span>Export Logs</span>
+                </div>
+            </nav>
+
+            <div class="stats-card">
+                <div class="stat-item">
+                    <span class="label">Today's Entries</span>
+                    <span class="value" id="entryCount">0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="company-brand">
+                    <h1 class="company-name">TEJAS KP <span class="ai-text">AI SOFTWARE</span></h1>
+                    <p class="subtitle">Next-Gen Attendance Intelligence</p>
+                </div>
+                <div class="user-status">
+                    <span class="status-dot"></span>
+                    System Online
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Check-in Section -->
+                <section class="card glass entry-panel">
+                    <div class="panel-header">
+                        <i data-lucide="camera"></i>
+                        <h2>Face ID Check-In</h2>
+                    </div>
+
+                    <div class="terminal-screen">
+                        <video id="video" autoplay muted playsinline></video>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                        
+                        <!-- High-Tech HUD -->
+                        <div class="scan-overlay">
+                            <div class="scan-line"></div>
+                            <div class="hud-corners">
+                                <div class="corner tl"></div>
+                                <div class="corner tr"></div>
+                                <div class="corner bl"></div>
+                                <div class="corner br"></div>
+                            </div>
+                            <div class="hud-rings">
+                                <div class="ring ring-1"></div>
+                                <div class="ring ring-2"></div>
+                            </div>
+                            <div class="hud-data">
+                                <div class="data-item">ID_SCAN: ACTIVE</div>
+                                <div class="data-item">FACIAL_RECOGNITION: ON</div>
+                                <div class="data-item">SEC_LVL: 04</div>
+                            </div>
+                        </div>
+
+                        <div id="flashEffect" class="flash-effect"></div>
+                        <div id="processingOverlay" class="processing-overlay">
+                            <div class="spinner"></div>
+                            <span>VERIFYING FACE...</span>
+                        </div>
+                        <div id="capturedPhoto" class="captured-preview"></div>
+                    </div>
+
+                    <form id="attendanceForm" class="attendance-form">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>Student Name</label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="user"></i>
+                                    <input type="text" id="studentName" placeholder="Enter Full Name" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>Domain / Department</label>
+                                <div class="input-wrapper">
+                                    <i data-lucide="code-2"></i>
+                                    <select id="domain" required>
+                                        <option value="" disabled selected>Select Domain</option>
+                                        <option value="Web Development">Web Development</option>
+                                        <option value="AI / ML">AI / ML</option>
+                                        <option value="Cyber Security">Cyber Security</option>
+                                        <option value="Data Science">Data Science</option>
+                                        <option value="UI / UX Design">UI / UX Design</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-secondary" id="startCamBtn">
+                                <i data-lucide="power"></i>
+                                <span>Initialize Camera</span>
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="checkInBtn" disabled>
+                                <i data-lucide="log-in"></i>
+                                <span>Complete Check-In</span>
+                            </button>
+                        </div>
+
+                        <!-- Advanced Feature: System Console -->
+                        <div class="system-console">
+                            <div class="console-header">
+                                <span>SYSTEM_CONSOLE_V2.0</span>
+                                <div class="console-dots"><span></span><span></span><span></span></div>
+                            </div>
+                            <div id="consoleLogs" class="console-body">
+                                <div class="log-line">> SYSTEM READY...</div>
+                                <div class="log-line">> WAITING FOR INITIALIZATION...</div>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- History Section -->
+                <section class="card glass history-panel">
+                    <div class="panel-header">
+                        <div class="header-left">
+                            <i data-lucide="history"></i>
+                            <h2>Recent Attendance</h2>
+                        </div>
+                        <button class="btn btn-danger-outline btn-sm" id="clearAllBtn">
+                            <i data-lucide="trash-2"></i>
+                            <span>Clear History</span>
+                        </button>
+                    </div>
+                    
+                    <div class="log-container">
+                        <table class="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Domain</th>
+                                    <th>Check-In Time</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceLogs">
+                                <!-- Logs will appear here -->
+                            </tbody>
+                        </table>
+                        <div id="emptyState" class="empty-state">
+                            <i data-lucide="database-zap"></i>
+                            <p>Waiting for entries...</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i data-lucide="check-circle" id="toastIcon"></i>
+            <div class="toast-text">
+                <span id="toastTitle">Success</span>
+                <p id="toastMsg">Action completed.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
